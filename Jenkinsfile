@@ -45,9 +45,16 @@ pipeline {
                     }
                 }
                 stage('Frontend – Tests') {
+                    agent {
+                        docker { 
+                            // Esta imagen ya tiene Node, Chrome Headless y las dependencias de Linux
+                            image 'trion/ng-cli-karma:latest' 
+                            reuseNode true
+                        }
+                    }
                     steps {
                         dir('frontend-angular') {
-                            // Usamos --no-watch y --browsers=ChromeHeadless
+                            sh 'npm ci'
                             sh 'npx ng test --watch=false --browsers=ChromeHeadless'
                         }
                     }
