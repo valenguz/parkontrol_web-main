@@ -117,13 +117,7 @@ pipeline {
                         sh """  
                             docker stop ${BE_CONTAINER} 2>/dev/null || true  
                             docker rm   ${BE_CONTAINER} 2>/dev/null || true  
-                            docker run -d \  
-                              --name ${BE_CONTAINER} \  
-                              --network devops-net \  
-                              --restart always \  
-                              -p ${BE_HOST_PORT}:${BE_APP_PORT} \  
-                              -e PORT=${BE_APP_PORT} \  
-                              ${BE_IMAGE}:latest  
+                            docker run -d --name ${BE_CONTAINER} --network devops-net --restart always -p ${BE_HOST_PORT}:${BE_APP_PORT} -e PORT=${BE_APP_PORT} ${BE_IMAGE}:latest  
                         """  
                     }  
                 }  
@@ -132,12 +126,7 @@ pipeline {
                         sh """  
                             docker stop ${FE_CONTAINER} 2>/dev/null || true  
                             docker rm   ${FE_CONTAINER} 2>/dev/null || true  
-                            docker run -d \  
-                              --name ${FE_CONTAINER} \  
-                              --network devops-net \  
-                              --restart always \  
-                              -p ${FE_HOST_PORT}:80 \  
-                              ${FE_IMAGE}:latest  
+                            docker run -d --name ${FE_CONTAINER} --network devops-net --restart always -p ${FE_HOST_PORT}:80 ${FE_IMAGE}:latest  
                         """  
                     }  
                 }  

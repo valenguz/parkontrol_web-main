@@ -9,25 +9,10 @@ if ($LASTEXITCODE -ne 0) {
   
 Write-Host "==> Levantando Jenkins..." -ForegroundColor Cyan
 # Nota: Asegúrate de que no haya espacios después de cada `
-docker run -d `
-  --name jenkins `
-  --network devops-net `
-  --restart always `
-  -p 8080:8080 `
-  -v jenkins_home:/var/jenkins_home `
-  -v //var/run/docker.sock:/var/run/docker.sock `
-  jenkins/jenkins:lts-jdk21  
+docker run -d --name jenkins --network devops-net --restart always -p 8080:8080 -v jenkins_home:/var/jenkins_home -v //var/run/docker.sock:/var/run/docker.sock jenkins/jenkins:lts-jdk21
   
 Write-Host "==> Levantando SonarQube..." -ForegroundColor Cyan
-docker run -d `
-  --name sonarqube `
-  --network devops-net `
-  --restart always `
-  -p 9000:9000 `
-  -v sonarqube_data:/opt/sonarqube/data `
-  -v sonarqube_logs:/opt/sonarqube/logs `
-  -v sonarqube_extensions:/opt/sonarqube/extensions `
-  sonarqube:community  
+docker run -d --name sonarqube --network devops-net --restart always -p 9000:9000 -v sonarqube_data:/opt/sonarqube/data -v sonarqube_logs:/opt/sonarqube/logs -v sonarqube_extensions:/opt/sonarqube/extensions sonarqube:community
   
 Write-Host ""  
 Write-Host "--------------------------------------------" -ForegroundColor Green
