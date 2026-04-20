@@ -1,26 +1,43 @@
 pipeline {
     agent any
+    
+    tools { 
+        nodejs 'node20' 
+    }
+
     environment {
         SONAR_SERVER  = 'SonarQube'
         SONAR_TOKEN   = credentials('sonarqube-token')
         IMAGE         = 'parkontrol-frontend'
         CONTAINER     = 'parkontrol-web'
+        PORT_HOST     = '4200'  // Puerto donde lo verás en tu navegador
+        PORT_APP      = '80'    // El contenedor de Nginx suele usar el 80
     }
+
     stages {
-        stage('Install & Test') {
-            agent {
-                docker { 
-                    image 'trion/ng-cli-karma:latest'
-                    args '-u root'
-                }
-            }
+        stage('Checkout') {
             steps {
-                dir('frontend-angular') {
-                    sh 'npm ci'
-                    sh 'ng test --watch=false --browsers=ChromeHeadless'
-                }
+                git branch: 'main', url: 'https://github.com/valenguz/parkontrol_web-main.git'
             }
         }
+
+        stage('Install') {
+            steps { 
+                dir('frontend-angular') { // Asegúrate de que este sea el nombre exacto de la carpeta
+                    sh 'npm install' 
+                } 
+            }
+        }
+
+        stage('Test') {
+            steps { 
+                dir('frontend-angular') { 
+                    // Usamos --watch=false para que el test no se quede abierto en Jenkins
+                    sh 'npm run test -- --watch=false --browsers=ChromeHeadless' 
+                } 
+            }
+        }
+
         stage('Sonar Analysis') {
             steps {
                 dir('frontend-angular') {
@@ -30,17 +47,30 @@ pipeline {
                 }
             }
         }
+
         stage('Quality Gate') {
-            steps { timeout(time: 5, unit: 'MINUTES') { waitForQualityGate abortPipeline: true } }
+            steps { 
+                timeout(time: 5, unit: 'MINUTES') { 
+                    waitForQualityGate abortPipeline: true 
+                } 
+            }
         }
-        stage('Docker Build & Deploy') {
+
+        stage('Docker Build') {
             steps {
                 dir('frontend-angular') {
                     sh "docker build -t ${IMAGE}:latest ."
-                    sh "docker stop ${CONTAINER} || true"
-                    sh "docker rm ${CONTAINER} || true"
-                    sh "docker run -d --name ${CONTAINER} --network devops-net -p 4200:80 ${IMAGE}:latest"
                 }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh """
+                    docker stop ${CONTAINER} || true
+                    docker rm ${CONTAINER} || true
+                    docker run -d --name ${CONTAINER} --network devops-net -p ${PORT_HOST}:${PORT_APP} ${IMAGE}:latest
+                """
             }
         }
     }
