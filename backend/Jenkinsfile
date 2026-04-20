@@ -10,12 +10,30 @@ pipeline {
         PORT_APP      = '3000'
     }
     stages {
+        // --- ESTA ETAPA ES LA QUE FALTA ---
+        stage('Checkout') {
+            steps {
+                // Reemplaza la URL con la de tu repositorio de GitHub
+                git branch: 'main', url: 'https://github.com/valenguz/parkontrol_web-main.git'
+            }
+        }
+
         stage('Install') {
-            steps { dir('backend') { sh 'npm ci' } }
+            steps { 
+                dir('backend') { 
+                    sh 'npm install' 
+                } 
+            }
         }
+
         stage('Test') {
-            steps { dir('backend') { sh 'npm run test:cov' } }
+            steps { 
+                dir('backend') { 
+                    sh 'npm run test:cov' 
+                } 
+            }
         }
+
         stage('Sonar Analysis') {
             steps {
                 dir('backend') {
@@ -25,9 +43,15 @@ pipeline {
                 }
             }
         }
+
         stage('Quality Gate') {
-            steps { timeout(time: 5, unit: 'MINUTES') { waitForQualityGate abortPipeline: true } }
+            steps { 
+                timeout(time: 5, unit: 'MINUTES') { 
+                    waitForQualityGate abortPipeline: true 
+                } 
+            }
         }
+
         stage('Docker Build') {
             steps {
                 dir('backend') {
@@ -35,6 +59,7 @@ pipeline {
                 }
             }
         }
+
         stage('Deploy') {
             steps {
                 sh """
