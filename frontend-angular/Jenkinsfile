@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+    environment {
+        SONAR_SERVER  = 'SonarQube'
+        SONAR_TOKEN   = credentials('sonarqube-token')
+        IMAGE         = 'parkontrol-frontend'
+        CONTAINER     = 'parkontrol-web'
+    }
+    stages {
+        stage('Install & Test') {
+            agent {
+                docker { 
+                    image 'trion/ng-cli-karma:latest'
+                    args '-u root'
+                }
+            }
+            steps {
+                dir('frontend-angular') {
+                    sh 'npm ci'
+                    sh 'ng test --watch=false --browsers=ChromeHeadless'
+                }
+            }
+        }
+        stage('Sonar Analysis') {
+            steps {
+                dir('frontend-angular') {
+                    withSonarQubeEnv("${SONAR_SERVER}") {
+                        sh "npx sonar-scanner -Dsonar.projectKey=park-fe -Dsonar.token=${SONAR_TOKEN}"
+                    }
+                }
+            }
+        }
+        stage('Quality Gate') {
+            steps { timeout(time: 5, unit: 'MINUTES') { waitForQualityGate abortPipeline: true } }
+        }
+        stage('Docker Build & Deploy') {
+            steps {
+                dir('frontend-angular') {
+                    sh "docker build -t ${IMAGE}:latest ."
+                    sh "docker stop ${CONTAINER} || true"
+                    sh "docker rm ${CONTAINER} || true"
+                    sh "docker run -d --name ${CONTAINER} --network devops-net -p 4200:80 ${IMAGE}:latest"
+                }
+            }
+        }
+    }
+}
