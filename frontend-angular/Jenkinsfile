@@ -59,19 +59,25 @@ pipeline {
         stage('Docker Build') {
             steps {
                 dir('frontend-angular') {
-                    sh "docker build -t ${IMAGE}:latest ."
+                    script {
+                        // El plugin ahora maneja la construcción
+                        docker.build("${IMAGE}:latest", ".")
+                    }
                 }
             }
         }
 
         stage('Deploy') {
             steps {
-                sh """
-                    docker stop ${CONTAINER} || true
-                    docker rm ${CONTAINER} || true
-                    docker run -d --name ${CONTAINER} --network devops-net -p ${PORT_HOST}:${PORT_APP} ${IMAGE}:latest
-                """
+                script {
+                    // Detenemos lo anterior si existe
+                    sh "docker stop ${CONTAINER} || true"
+                    sh "docker rm ${CONTAINER} || true"
+                    
+                    // Corremos la imagen que acabamos de construir
+                    docker.image("${IMAGE}:latest").run("-d --name ${CONTAINER} --network devops-net -p ${PORT_HOST}:${PORT_APP}")
+                }
             }
         }
-    }
+        }
 }
