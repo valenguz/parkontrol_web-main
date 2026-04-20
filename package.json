@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "jest-extended": "^7.0.0"
+  }
+}

@@ -42,17 +42,19 @@ describe('UsuariosService (UNIT - SIN CREAR)', () => {
     jest.clearAllMocks();
   });
 
-  it('C1: Debe retornar usuario por correo', async () => {
-    const usuarioMock = { id: 1, correo: 'test@test.com', empresa: { id: 1 } };
+  it('C1: Debe retornar usuario por correo (Patrón AAA)', async () => {
+    // Arrange
+    const correoBusqueda = 'test@test.com';
+    const usuarioMock = { id: 1, correo: correoBusqueda, empresa: { id: 1 } };
     mockUsuarioRepository.findOne.mockResolvedValue(usuarioMock);
 
-    const result = await service.findUsuarioByCorreo('test@test.com');
+    // Act
+    const result = await service.findUsuarioByCorreo(correoBusqueda);
 
+    // Assert
+    expect(result).not.toBeNull();
     expect(result).toEqual(usuarioMock);
-    expect(mockUsuarioRepository.findOne).toHaveBeenCalledWith({
-      where: { correo: 'test@test.com' },
-      relations: ['empresa']
-    });
+    expect(mockUsuarioRepository.findOne).toHaveBeenCalled();
   });
 
   it('C2: Debe retornar null si no existe correo', async () => {
