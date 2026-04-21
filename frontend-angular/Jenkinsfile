@@ -42,7 +42,12 @@ pipeline {
                 dir('frontend-angular') {
                     withSonarQubeEnv("${SONAR_SERVER}") {
                         // CAMBIO DEFINITIVO: Usamos la Key que me mostraste en la foto
-                        sh "npx sonar-scanner -Dsonar.projectKey=parkontrol-frontend -Dsonar.token=${SONAR_TOKEN}"
+                        sh """
+                        npx sonar-scanner \
+                        -Dsonar.projectKey=parkontrol-frontend \
+                        -Dsonar.token=${SONAR_TOKEN} \
+                        -Dsonar.javascript.lcov.reportPaths=coverage/frontend-angular/lcov.info
+                        """
                     }
                 }
             }
