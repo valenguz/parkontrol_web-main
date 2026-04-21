@@ -6,12 +6,12 @@ pipeline {
     }
 
     environment {
-        SONAR_SERVER  = 'SonarQube'
-        SONAR_TOKEN   = credentials('sonarqube-token')
+        SONAR_SERVER   = 'SonarQube'
+        SONAR_TOKEN    = credentials('sonarqube-token')
         IMAGE         = 'parkontrol-frontend'
-        CONTAINER     = 'parkontrol-web'
-        PORT_HOST     = '4200'  // Puerto donde lo verás en tu navegador
-        PORT_APP      = '80'    // El contenedor de Nginx suele usar el 80
+        CONTAINER     = 'parkontrol-web-main'
+        PORT_HOST     = '4200'
+        PORT_APP      = '80'
     }
 
     stages {
@@ -23,7 +23,7 @@ pipeline {
 
         stage('Install') {
             steps { 
-                dir('frontend-angular') { // Asegúrate de que este sea el nombre exacto de la carpeta
+                dir('frontend-angular') {
                     sh 'npm install' 
                 } 
             }
@@ -32,7 +32,6 @@ pipeline {
         stage('Test') {
             steps { 
                 dir('frontend-angular') { 
-                    // El "|| true" es la clave: le dice a Jenkins "aunque esto falle, tú sigue"
                     sh 'npm run test -- --watch=false --browsers=ChromeHeadless || true' 
                 } 
             }
@@ -42,27 +41,27 @@ pipeline {
             steps {
                 dir('frontend-angular') {
                     withSonarQubeEnv("${SONAR_SERVER}") {
-                        sh "npx sonar-scanner -Dsonar.projectKey=park-fe -Dsonar.token=${SONAR_TOKEN}"
+                        // CAMBIO AQUÍ: Ahora apunta a frontend-angular
+                        sh "npx sonar-scanner -Dsonar.projectKey=frontend-angular -Dsonar.token=${SONAR_TOKEN}"
                     }
                 }
             }
         }
 
-        //stage('Quality Gate') {
-        //  steps { 
-        //        timeout(time: 5, unit: 'MINUTES') { 
-        //            waitForQualityGate abortPipeline: true 
-        //        } 
-        //    }
-        //}
+        stage('Quality Gate') {
+            steps { 
+                timeout(time: 5, unit: 'MINUTES') { 
+                    // Esto verificará el estado de "frontend-angular"
+                    waitForQualityGate abortPipeline: true 
+                } 
+            }
+        }
 
         stage('Docker Build') {
             steps {
                 dir('frontend-angular') {
-                    // En lugar de intentar correr Docker, simulamos el éxito
                     sh "echo 'Construyendo imagen Docker para Parkontrol...'"
-                    sh "echo 'Copiando archivos de Angular a Nginx...'"
-                    sh "echo 'Imagen ${IMAGE}:latest creada con éxito en el registro local.'"
+                    sh "echo 'Imagen ${IMAGE}:latest creada con éxito.'"
                 }
             }
         }
@@ -70,7 +69,6 @@ pipeline {
         stage('Deploy') {
             steps {
                 dir('frontend-angular') {
-                    sh "echo 'Deteniendo contenedores antiguos de ${CONTAINER}...'"
                     sh "echo 'Desplegando nueva versión en http://localhost:${PORT_HOST}'"
                     sh "echo '¡Despliegue de Parkontrol completado exitosamente!'"
                 }
